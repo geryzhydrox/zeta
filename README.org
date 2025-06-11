@@ -30,6 +30,5 @@ feature (specifically, =specifications->manifest= and
 default) from a directory tree (located at =$ZETA_ROOT=, =$HOME/.zeta=
 by default) and install it via =guix install -m=. This has the
 advantage that you can manually use both the individual manifests as
-well as the root manifest as inputs for =guix shell -m= or =guix
-install -m=.
+well as the root manifest as inputs for =guix shell -m= or =guix install -m=.
 
