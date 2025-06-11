@@ -1,4 +1,35 @@
 # -*- mode: org; coding: utf-8; -*-
 
 #+TITLE: README for Zeta
+* Motivation
+Declarative package management sucks.  There's a reason imperative
+package managers like =apt= have become the norm: The workflow is
+clumsy. Consider that you need to do the following if you just want to
+install a single package, say =cowsay=:
+
+- Open your editor
+- Locate the specific file where you declare packages like =cowsay= (or create it, if it doesn't exist yet)
+- Put in the package
+- Exit your editor
+- Open your terminal
+- Rebuild
+  
+After almost 2 years of daily-driving NixOS, I have realized that this
+is tiring, to say the least. The solution? A wrapper whose UX makes it
+/feel/ imperative, providing simple =apt= - esque commands like
+=install= and =remove=, but actually acts declarative under the
+hood. That way, you get the best of both worlds: Simple, short
+commands to install and remove packages *AND* the abiliity to subject
+your package manifest(s) to VC via git and have an overview of what's
+installed at all times.
+
+* Technical aspects
+=zeta= aims to be lightweight and simple. It uses =guix='s =manifest=
+feature (specifically, =specifications->manifest= and
+=concatenate-manifests=) to build a "root" manifest (=root.scm= by
+default) from a directory tree (located at =$ZETA_ROOT=, =$HOME/.zeta=
+by default) and install it via =guix install -m=. This has the
+advantage that you can manually use both the individual manifests as
+well as the root manifest as inputs for =guix shell -m= or =guix
+install -m=.
 
