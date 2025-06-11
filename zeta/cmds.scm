@@ -1,0 +1,64 @@
+(add-to-load-path (string-append (dirname (current-filename)) "/.."))
+
+(define-module (zeta cmds)
+  #:use-module (zeta prompts)
+  #:use-module (zeta system)
+  #:use-module (zeta term)
+  #:export (zeta-add
+	    zeta-del
+	    zeta-install))
+
+(define (zeta-add manifest-path)
+  (if (list? manifest-path)
+      (for-each zeta-add manifest-path)
+      (let* ((slash-index (string-rindex manifest-path #\/))
+	     ;; HACK: Abuse the short-circuiting evaluation of `and` and `or`
+	     (path (if slash-index
+		       (string-append %zeta-root "/"
+				      (string-take manifest-path (1+ slash-index)))
+		       %zeta-root))
+	     (filepath (relative->absolute manifest-path)))
+	(when (or (and (file-exists? filepath)
+		       (yn-prompt (format #f "Manifest ~a already exists. Overwrite?" filepath))
+		       (delete-file filepath))
+		  (not (file-exists? filepath)))
+	  (info-with-msg (format #f "Adding manifest ~a" filepath))
+	  (mkdir-p path)
+	  (touch filepath))
+	)))
+
+(define (zeta-del manifest-path)
+  (if (list? manifest-path)
+      (for-each zeta-del manifest-path)
+      (let ((filepath (relative->absolute manifest-path)))
+	;; (println filepath)
+	(unless (file-exists? filepath)
+	  (error-with-msg (format #f "Specified manifest ~a does not exist" filepath)))
+	(info-with-msg (format #f "Deleting manifest ~a" filepath))
+	(delete-file filepath)
+        )))
+
+(define (zeta-install manifest-path pkg)
+  (if (list? pkg)
+      (for-each (lambda (pkg)
+		  (zeta-install manifest-path pkg)) pkg)
+      (begin
+	(let ((filepath (relative->absolute manifest-path))) 
+	  (unless (file-exists? filepath)
+	    (info-with-msg (format #f "Specified manifest ~a does not exist" filepath))
+	    (if (yn-prompt "Create manifest?")
+		(zeta-add manifest-path)
+		(exit)))
+	  (info-with-msg (format #f "Installing package ~a at manifest ~a" pkg filepath))
+	  (let* ((pkgs (read-pkgs filepath))
+		 (new-pkgs (if (member pkg pkgs)
+			       (begin
+				 (info-with-msg "Package already installed. Skipping...")
+				 pkgs)
+			       (append pkgs (list pkg))))
+		 (new-file (format #f "(specifications->manifest '~a)" new-pkgs)))
+	    (write-file filepath new-file)
+	    ;; (display "\b\b...Done.")
+	    
+	    )))
+      ))
