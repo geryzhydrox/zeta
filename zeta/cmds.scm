@@ -12,7 +12,6 @@
   (if (list? manifest-path)
       (for-each zeta-add manifest-path)
       (let* ((slash-index (string-rindex manifest-path #\/))
-	     ;; HACK: Abuse the short-circuiting evaluation of `and` and `or`
 	     (path (if slash-index
 		       (string-append %zeta-root "/"
 				      (string-take manifest-path (1+ slash-index)))
@@ -31,7 +30,6 @@
   (if (list? manifest-path)
       (for-each zeta-del manifest-path)
       (let ((filepath (relative->absolute manifest-path)))
-	;; (println filepath)
 	(unless (file-exists? filepath)
 	  (error-with-msg (format #f "Specified manifest ~a does not exist" filepath)))
 	(info-with-msg (format #f "Deleting manifest ~a" filepath))
@@ -43,7 +41,7 @@
       (for-each (lambda (pkg)
 		  (zeta-install manifest-path pkg)) pkg)
       (begin
-	(let ((filepath (relative->absolute manifest-path))) 
+	(let ((filepath (relative->absolute manifest-path)))
 	  (unless (file-exists? filepath)
 	    (info-with-msg (format #f "Specified manifest ~a does not exist" filepath))
 	    (if (yn-prompt "Create manifest?")
@@ -55,10 +53,8 @@
 			       (begin
 				 (info-with-msg "Package already installed. Skipping...")
 				 pkgs)
-			       (append pkgs (list pkg))))
+			       (map (lambda (p) (format #f "\"~a\"" p))
+				    (append pkgs (list pkg)))))
 		 (new-file (format #f "(specifications->manifest '~a)" new-pkgs)))
 	    (write-file filepath new-file)
-	    ;; (display "\b\b...Done.")
-	    
-	    )))
-      ))
+	    )))))

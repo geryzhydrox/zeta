@@ -10,7 +10,8 @@
 	    make-file-at-path
 	    make-scm-file-at-path
 	    write-file
-	    read-pkgs))
+	    read-pkgs
+	    read-manifests))
 
 
 (define %zeta-root (or (getenv "ZETA_ROOT")
@@ -40,12 +41,25 @@
     (lambda (output-port)
       (display str output-port))))
 
-(define (read-pkgs manifest)
-  (call-with-input-file manifest
+(define (read-file filepath)
+  (call-with-input-file filepath
     (lambda (input-port)
-      (let ((result (read input-port)))
-	(match result
-	  (('specifications->manifest
-	    ('quote
-	     (pkgs ...))) pkgs)
-	  (_ '()))))))
+      (read input-port))))
+
+(define (read-pkgs manifest)
+  (match (read-file manifest)
+    (('specifications->manifest
+      ('quote
+       (pkgs ...))) pkgs)
+    (_ '())))
+
+(define (read-manifests root-file)
+  (match (read-file root-file)
+    (('concatenate-manifests
+      ('map ('lambda ('filepath)
+	      ('primitive-eval
+	       ('call-with-input-file 'filepath
+		 ('lambda ('input-port)
+		   ('read 'input-port)))))
+	    ('quote (pkgs ...)))) pkgs)
+    (_ '())))
