@@ -4,12 +4,14 @@
   #:use-module (zeta prompts)
   #:use-module (zeta system)
   #:use-module (zeta term)
+  #:use-module (ice-9 ftw)
+  #:use-module (ice-9 readline)
   #:export (zeta-add
 	    zeta-del
 	    zeta-install
 	    zeta-remove))
 
-(define (zeta-add manifest-path)
+(define* (zeta-add manifest-path #:optional (rebuild? #t))
   (if (list? manifest-path)
       (for-each zeta-add manifest-path)
       (let* ((slash-index (string-rindex manifest-path #\/))
@@ -34,8 +36,9 @@
 				    (append manifests (list filepath))))
 		 (new-root (root-with-manifests new-manifests)))
 	    (write-file %root-manifest new-root)
-	    (apply-root-manifest))
-	  ))))
+	    (when rebuild?
+	      (apply-root-manifest))
+	  )))))
 
 (define (zeta-del manifest-path)
   (if (list? manifest-path)
@@ -56,16 +59,26 @@
         )))
 
 (define (zeta-install manifest-path pkg)
+  (define creating-new-manifest? #f)
   (if (list? pkg)
       (for-each (lambda (pkg)
 		  (zeta-install manifest-path pkg)) pkg)
       (begin
+	(unless manifest-path
+	  (println "Hello World")
+	  (info-with-msg "No manifest path provided.")
+	  (let* ((answer (numbered-prompt "Install at:"  
+					  (append (read-manifests %root-manifest) (list "Create new manifest"))))
+		 (new-manifest-path (if (string= answer "Create new manifest") 
+					(begin (set! creating-new-manifest? #t) (readline "Create new manifest at: "))
+					(string-drop-right 
+					 (string-drop answer (1+ (string-length %zeta-root))) 4))))
+	    (set! manifest-path new-manifest-path)))
 	(let ((filepath (relative->absolute manifest-path)))
+	  (when creating-new-manifest? (zeta-add manifest-path #f))
 	  (unless (file-exists? filepath)
 	    (info-with-msg (format #f "Specified manifest ~a does not exist" filepath))
-	    (if (yn-prompt "Create manifest?")
-		(zeta-add manifest-path)
-		(exit)))
+	    (when (yn-prompt "Create manifest?") (zeta-add manifest-path #f)))
 	  (info-with-msg (format #f "Installing package ~a at manifest ~a" pkg filepath))
 	  (let* ((pkgs (read-pkgs filepath))
 		 (new-pkgs (if (member pkg pkgs)

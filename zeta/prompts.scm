@@ -26,7 +26,7 @@
     (if (and
 	 (integer? input)
 	 (>= input 1)
-	 (< input (length lst)))
+	 (<= input (length lst)))
 	(list-ref lst (- input 1))
 	(choice (string->number (readline (string-append prompt " "))))
     )))
