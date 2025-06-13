@@ -64,7 +64,7 @@
 		  (zeta-install manifest-path pkg)) pkg)
       (begin
 	(unless manifest-path
-	  (info-with-msg "No manifest path provided.")
+	  (info-with-msg "No manifest specified")
 	  (let* ((answer (numbered-prompt "Install at:"  
 					  (append (read-manifests %root-manifest) (list "Create new manifest"))))
 		 (new-manifest-path (if (string= answer "Create new manifest") 
@@ -90,6 +90,24 @@
 	    )))))
 
 (define (zeta-remove manifest-path pkg)
+  (define available-manifests '())
+  (unless manifest-path
+    (info-with-msg "No manifest specified")
+    (ftw %zeta-root
+	 (lambda (filename statinfo flag)
+	   (when (and
+		  (eq? flag 'regular)
+		  (not (string= filename %root-manifest))
+		  (member pkg (read-pkgs filename)))
+	     (set! available-manifests (append available-manifests (list filename))))
+	   #t
+	   ))
+    (let ((answer (and (not (nil? available-manifests))
+		       (numbered-prompt "Choose manifest to remove from:" available-manifests))))
+      (set! manifest-path
+	    (string-drop-right 
+	     (string-drop answer (1+ (string-length %zeta-root))) 4)
+	    )))
   (if (list? pkg)
       (for-each (lambda (pkg)
 		  (zeta-remove manifest-path pkg)) pkg)

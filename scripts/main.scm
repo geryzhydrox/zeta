@@ -4,16 +4,36 @@
 (add-to-load-path (string-append (dirname (current-filename)) "/.."))
 
 (use-modules (ice-9 match)
+	     (ice-9 getopt-long)
+	     (srfi srfi-1)
 	     (zeta cmds)
 	     (zeta term))
 
-(match (command-line)
+(define option-spec
+  '((manifest (single-char #\m) (value #t))))
+
+(define options (getopt-long (command-line) option-spec))
+
+(define provided-manifest (option-ref options 'manifest #f))
+
+(define cmdline (command-line))
+
+(when provided-manifest
+  (set! cmdline 
+	(remove (lambda (str)
+		  (or (string-contains str "--manifest")
+		      (string= str "-m"))) cmdline))
+  (set! cmdline (delete provided-manifest cmdline)))
+
+;; (println provided-manifest)
+;; (println cmdline)
+;; (exit)
+
+(match cmdline
   ;; ((_ "init")			(zeta-init))
-  ;; ((_ "init" init-location)		(zeta-init init-location))
-  ((_ "add" manifest-path ...)		(zeta-add manifest-path))
-  ((_ "del" manifest-path ...)		(zeta-del manifest-path))
-  ((_ "install" manifest-path pkgs 1..)	(zeta-install manifest-path pkgs))
-  ((_ "install" pkgs)			(zeta-install #f pkgs))
-  ((_  "remove" manifest-path pkgs 1..)	(zeta-remove manifest-path pkgs))
-  ((_  "remove" pkgs)			(zeta-remove #f pkgs))
+  ;; ((_ "init" init-location)	(zeta-init init-location))
+  ((_ "add" manifest-path ...)	(zeta-add manifest-path))
+  ((_ "del" manifest-path ...)	(zeta-del manifest-path))
+  ((_ "install" pkgs ...)	(zeta-install provided-manifest pkgs))
+  ((_  "remove" pkgs ...)	(zeta-remove provided-manifest pkgs))
   (_ (usage)))
