@@ -6,7 +6,8 @@
   #:use-module (zeta term)
   #:export (zeta-add
 	    zeta-del
-	    zeta-install))
+	    zeta-install
+	    zeta-remove))
 
 (define (zeta-add manifest-path)
   (if (list? manifest-path)
@@ -28,11 +29,12 @@
 	  (let* ((manifests (read-manifests %root-manifest))
 		 (new-manifests (if (member filepath manifests)
 				    (begin
-				      (info-with-msg "Manifest already contained. Skipping...")
+				      (info-with-msg "Manifest already contained in root. Skipping...")
 				      manifests)
 				    (append manifests (list filepath))))
 		 (new-root (root-with-manifests new-manifests)))
-	    (write-file %root-manifest new-root))
+	    (write-file %root-manifest new-root)
+	    (apply-root-manifest))
 	  ))))
 
 (define (zeta-del manifest-path)
@@ -43,6 +45,14 @@
 	  (error-with-msg (format #f "Specified manifest ~a does not exist" filepath)))
 	(info-with-msg (format #f "Deleting manifest ~a" filepath))
 	(delete-file filepath)
+	(let* ((manifests (read-manifests %root-manifest))
+	       (new-manifests (if (member filepath manifests)
+				  (delete filepath manifests)
+				  (begin
+				    (info-with-msg "Manifest not contained in root. Skipping..."))))
+	       (new-root (root-with-manifests new-manifests)))
+	  (write-file %root-manifest new-root)
+	  (apply-root-manifest))
         )))
 
 (define (zeta-install manifest-path pkg)
@@ -65,4 +75,25 @@
 			       (append pkgs (list pkg))))
 		 (new-file (manifest-with-pkgs new-pkgs)))
 	    (write-file filepath new-file)
+	    (apply-root-manifest)
+	    )))))
+
+(define (zeta-remove manifest-path pkg)
+  (if (list? pkg)
+      (for-each (lambda (pkg)
+		  (zeta-remove manifest-path pkg)) pkg)
+      (begin
+	(let ((filepath (relative->absolute manifest-path)))
+	  (unless (file-exists? filepath)
+	    (info-with-msg (format #f "Specified manifest ~a does not exist" filepath)))
+	  (info-with-msg (format #f "Deleting package ~a from manifest ~a" pkg filepath))
+	  (let* ((pkgs (read-pkgs filepath))
+		 (new-pkgs (if (member pkg pkgs)
+			       (delete pkg pkgs)
+			       (begin
+				 (info-with-msg "Package not installed. Skipping...")
+				 pkgs)))
+		 (new-file (manifest-with-pkgs new-pkgs)))
+	    (write-file filepath new-file)
+	    (apply-root-manifest)
 	    )))))

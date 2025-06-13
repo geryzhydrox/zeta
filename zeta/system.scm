@@ -5,6 +5,7 @@
   #:use-module (zeta term)
   #:export (%zeta-root
 	    %root-manifest
+	    apply-root-manifest
 	    relative->absolute
 	    mkdir-p
 	    touch
@@ -24,6 +25,11 @@
 
 (define %root-manifest
   (string-append %zeta-root "/root.scm"))
+
+(define* (apply-root-manifest #:optional (root-file %root-manifest))
+  (unless (eq? (system* "guix" "package" "-m" root-file) 0)
+    (error-with-msg "Guix package command failed. Make sure `guix` is properly installed."
+      )))
 
 (define (relative->absolute rel-path)
   (string-append %zeta-root
