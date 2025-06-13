@@ -36,8 +36,7 @@
 				    (append manifests (list filepath))))
 		 (new-root (root-with-manifests new-manifests)))
 	    (write-file %root-manifest new-root)
-	    (when rebuild?
-	      (apply-root-manifest))
+	    (when rebuild? (apply-root-manifest))
 	  )))))
 
 (define (zeta-del manifest-path)
@@ -65,7 +64,6 @@
 		  (zeta-install manifest-path pkg)) pkg)
       (begin
 	(unless manifest-path
-	  (println "Hello World")
 	  (info-with-msg "No manifest path provided.")
 	  (let* ((answer (numbered-prompt "Install at:"  
 					  (append (read-manifests %root-manifest) (list "Create new manifest"))))
