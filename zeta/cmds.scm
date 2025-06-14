@@ -57,75 +57,83 @@
 	  (apply-root-manifest))
         )))
 
-(define (zeta-install manifest-path pkg)
+(define (zeta-install manifest-path pkgs)
   (define creating-new-manifest? #f)
-  (if (list? pkg)
-      (for-each (lambda (pkg)
-		  (zeta-install manifest-path pkg)) pkg)
-      (begin
-	(unless manifest-path
-	  (info-with-msg "No manifest specified")
-	  (let* ((answer (numbered-prompt "Install at:"  
-					  (append (read-manifests %root-manifest) (list "Create new manifest"))))
-		 (new-manifest-path (if (string= answer "Create new manifest") 
-					(begin (set! creating-new-manifest? #t) (readline "Create new manifest at: "))
-					(string-drop-right 
-					 (string-drop answer (1+ (string-length %zeta-root))) 4))))
-	    (set! manifest-path new-manifest-path)))
-	(let ((filepath (relative->absolute manifest-path)))
-	  (when creating-new-manifest? (zeta-add manifest-path #f))
-	  (unless (file-exists? filepath)
-	    (info-with-msg (format #f "Specified manifest ~a does not exist" filepath))
-	    (when (yn-prompt "Create manifest?") (zeta-add manifest-path #f)))
-	  (info-with-msg (format #f "Installing package ~a at manifest ~a" pkg filepath))
-	  (let* ((pkgs (read-pkgs filepath))
-		 (new-pkgs (if (member pkg pkgs)
-			       (begin
-				 (info-with-msg "Package already installed. Skipping...")
-				 pkgs)
-			       (append pkgs (list pkg))))
-		 (new-file (manifest-with-pkgs new-pkgs)))
-	    (write-file filepath new-file)
-	    (apply-root-manifest)
-	    )))))
+  (define recurse? #t)
+  (when (eq? (length pkgs) 1) (set! recurse? #f))
+  (define pkg (car pkgs))
+  (begin
+    (unless manifest-path
+      (info-with-msg "No manifest specified")
+      (let* ((answer (numbered-prompt "Install at:"  
+				      (append (read-manifests %root-manifest) (list "Create new manifest"))))
+	     (new-manifest-path (if (string= answer "Create new manifest") 
+				    (begin (set! creating-new-manifest? #t) (readline "Create new manifest at: "))
+				    (string-drop-right 
+				     (string-drop answer (1+ (string-length %zeta-root))) 4))))
+	(set! manifest-path new-manifest-path)))
+    (let ((filepath (relative->absolute manifest-path)))
+      (when creating-new-manifest? (zeta-add manifest-path #f))
+      (unless (file-exists? filepath)
+	(info-with-msg (format #f "Specified manifest ~a does not exist" filepath))
+	(when (yn-prompt "Create manifest?") (zeta-add manifest-path #f)))
+      (info-with-msg (format #f "Installing package ~a at manifest ~a" pkg filepath))
+      (let* ((manifest-pkgs (read-pkgs filepath))
+	     (new-pkgs (if (member pkg manifest-pkgs)
+			   (begin
+			     (info-with-msg "Package already installed. Skipping...")
+			     manifest-pkgs)
+			   (append manifest-pkgs (list pkg))))
+	     (new-file (manifest-with-pkgs new-pkgs)))
+	(write-file filepath new-file)
+	;; (apply-root-manifest)
+	)))
+  (if recurse?
+      (zeta-install manifest-path (cdr pkgs))
+      (apply-root-manifest))
+  )
 
-(define (zeta-remove manifest-path pkg)
+(define (zeta-remove manifest-path pkgs)
   (define available-manifests '())
-  (if (list? pkg)
-      (for-each (lambda (pkg)
-		  (zeta-remove manifest-path pkg)) pkg)
-      (begin
-	(unless manifest-path
-	  (info-with-msg "No manifest specified")
-	  (ftw %zeta-root
-	       (lambda (filename statinfo flag)
-		 (when (and
-			(eq? flag 'regular)
-			(not (string= filename %root-manifest))
-			(member pkg (read-pkgs filename)))
-		   (set! available-manifests (append available-manifests (list filename))))
-		 #t
-		 ))
-	  (let ((answer (and (not (nil? available-manifests))
-			     (numbered-prompt "Choose manifest to remove from:" available-manifests))))
-	    (set! manifest-path
-		  (if answer
-		      (string-drop-right 
-		       (string-drop answer (1+ (string-length %zeta-root))) 4) 
-		      (error-with-msg "Specified package not installed."))
-		  )))
-	
-	(let ((filepath (relative->absolute manifest-path)))
-	  (unless (file-exists? filepath)
-	    (error-with-msg (format #f "Specified manifest ~a does not exist" filepath)))
-	  (info-with-msg (format #f "Deleting package ~a from manifest ~a" pkg filepath))
-	  (let* ((pkgs (read-pkgs filepath))
-		 (new-pkgs (if (member pkg pkgs)
-			       (delete pkg pkgs)
-			       (begin
-				 (info-with-msg "Package not installed. Skipping...")
-				 pkgs)))
-		 (new-file (manifest-with-pkgs new-pkgs)))
-	    (write-file filepath new-file)
-	    (apply-root-manifest)
-	    )))))
+  (define manifest-provided? manifest-path)
+  (define recurse? #t)
+  (when (eq? (length pkgs) 1) (set! recurse? #f))
+  (define pkg (car pkgs))
+  (begin
+    (unless manifest-path
+      (info-with-msg "No manifest specified")
+      (ftw %zeta-root
+	   (lambda (filename statinfo flag)
+	     (when (and
+		    (eq? flag 'regular)
+		    (not (string= filename %root-manifest))
+		    (member pkg (read-pkgs filename)))
+	       (set! available-manifests (append available-manifests (list filename))))
+	     #t
+	     ))
+      (let ((answer (and (not (nil? available-manifests))
+			 (numbered-prompt (format #f "Choose manifest to remove `~a` from:" pkg) available-manifests))))
+	(set! manifest-path
+	      (if answer
+		  (string-drop-right 
+		   (string-drop answer (1+ (string-length %zeta-root))) 4) 
+		  (error-with-msg "Specified package not installed."))
+	      )))
+      (let ((filepath (relative->absolute manifest-path)))
+      (unless (file-exists? filepath)
+	(error-with-msg (format #f "Specified manifest ~a does not exist" filepath)))
+      (info-with-msg (format #f "Deleting package ~a from manifest ~a" pkg filepath))
+      (let* ((manifest-pkgs (read-pkgs filepath))
+	     (new-pkgs (if (member pkg manifest-pkgs)
+			   (delete pkg manifest-pkgs)
+			   (begin
+			     (info-with-msg "Package not installed. Skipping...")
+			     manifest-pkgs)))
+	     (new-file (manifest-with-pkgs new-pkgs)))
+	(write-file filepath new-file)
+	)))
+    (if recurse?
+	(if manifest-provided? 
+	    (zeta-remove manifest-path (cdr pkgs))
+	    (zeta-remove #f (cdr pkgs)))
+	(apply-root-manifest)))
