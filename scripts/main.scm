@@ -30,10 +30,11 @@
 ;; (exit)
 
 (match cmdline
-  ;; ((_ "init")			(zeta-init))
+  ;; TODO 
+  ;; ((_ "init")		(zeta-init)) 
   ;; ((_ "init" init-location)	(zeta-init init-location))
-  ((_ "add" manifest-path ...)	(zeta-add manifest-path #f))
+  ((_ "add" manifest-path ...)	(zeta-add manifest-path))
   ((_ "del" manifest-path ...)	(zeta-del manifest-path))
-  ((_ "install" pkgs ...)	(zeta-install provided-manifest pkgs))
+  ((_ "install" pkgs ...)	(zeta-install pkgs provided-manifest))
   ((_  "remove" pkgs ...)	(zeta-remove pkgs provided-manifest))
   (_ (usage)))
