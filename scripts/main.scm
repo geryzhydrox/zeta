@@ -35,5 +35,5 @@
   ((_ "add" manifest-path ...)	(zeta-add manifest-path #f))
   ((_ "del" manifest-path ...)	(zeta-del manifest-path))
   ((_ "install" pkgs ...)	(zeta-install provided-manifest pkgs))
-  ((_  "remove" pkgs ...)	(zeta-remove provided-manifest pkgs))
+  ((_  "remove" pkgs ...)	(zeta-remove pkgs provided-manifest))
   (_ (usage)))

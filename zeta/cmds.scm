@@ -93,11 +93,11 @@
       (zeta-install manifest-path (cdr pkgs))
       (apply-root-manifest)))
 
-(define (zeta-remove manifest-path pkgs)
+(define-recursive (zeta-remove pkgs manifest-path)
+  (define pkg item)
   (define available-manifests '())
   (define manifest-provided? manifest-path)
-  (define recurse? (not (eq? (length pkgs) 1)))
-  (define pkg (car pkgs))
+
   (unless manifest-path
     (info-with-msg "No manifest specified")
     (ftw %zeta-root
@@ -130,8 +130,12 @@
 	   (new-file (manifest-with-pkgs new-pkgs)))
       (write-file filepath new-file)
       ))
-  (if recurse?
-      (if manifest-provided? 
-	  (zeta-remove manifest-path (cdr pkgs))
-	  (zeta-remove #f (cdr pkgs)))
-      (apply-root-manifest)))
+
+  (recurse
+   (cdr pkgs)
+   (if manifest-provided?
+       manifest-path
+       #f))
+
+  (finish
+   (apply-root-manifest)))
