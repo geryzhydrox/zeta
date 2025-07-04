@@ -18,7 +18,7 @@
 	    read-manifests
 	    manifest-with-pkgs
 	    root-with-manifests
-	    define-recursive*))
+	    define-recursive))
 
 
 (define %zeta-root (or (getenv "ZETA_ROOT")
@@ -104,26 +104,26 @@
 		manifests)
 	   "\n    ")))
 
+
 (define-syntax define-recursive
   ;; Macro for simplifying the definition of procedures that act on lists recursively.
   ;; First argument MUST be a list.
-  ;; Only defining define-recursive* (with define*) since define* is a superset of define
   (lambda (x)
-    (syntax-case x (recurse finish)
+    (syntax-case x (single recurse finish)
       ((define-recursive (proc-name list-arg ...)
-	 ;; (single identifier)
+	 (single identifier)
 	 exp ...
 	 ;; Recurse with arguments recurse-arg ... 
 	 (recurse recurse-arg ...)
 	 ;; If finished, evaluate expressions finish-exp ...
 	 (finish finish-exp ...))
-       (with-syntax ((item (datum->syntax x 'item)))
-	 #'(define (proc-name list-arg ...)
-	     (define recurse? (not (nil? (cdar (list list-arg ...)))))
-	     ;; `item` is introduced as a binding for a "single element" of the list
-	     (define item (caar (list list-arg ...)))
+       ;; (with-syntax ((item (datum->syntax x 'item)))
+       #'(define (proc-name list-arg ...)
+	   (define recurse? (not (nil? (cdar (list list-arg ...)))))
+	   ;; `item` is introduced as a binding for a "single element" of the list
+	   (let ((identifier (caar (list list-arg ...))))
 	     exp ...
 	     (if recurse?
 		 (proc-name recurse-arg ...)
-		 (begin finish-exp ...)))
-	 )))))
+		 (begin finish-exp ...))))
+       ))))

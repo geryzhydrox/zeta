@@ -12,7 +12,7 @@
 	    zeta-remove))
 
 (define-recursive (zeta-add manifest-paths)
-  (define manifest-path item)
+  (single manifest-path)
   (let* ((slash-index (string-rindex manifest-path #\/))
 	 (path (if slash-index
 		   (string-append %zeta-root "/"
@@ -43,7 +43,7 @@
      (when %rebuild? (apply-root-manifest))))
 
 (define-recursive (zeta-del manifest-paths)
-  (define manifest-path item)
+  (single manifest-path)
   (let ((filepath (relative->absolute manifest-path)))
     (unless (file-exists? filepath)
       (error-with-msg (format #f "Specified manifest ~a does not exist" filepath)))
@@ -62,7 +62,7 @@
      (apply-root-manifest)))
 
 (define-recursive (zeta-install pkgs manifest-path)
-  (define pkg item)
+  (single pkg)
   (define creating-new-manifest? #f)
   (unless manifest-path
     (info-with-msg "No manifest specified")
@@ -93,7 +93,7 @@
    (apply-root-manifest)))
 
 (define-recursive (zeta-remove pkgs manifest-path)
-  (define pkg item)
+  (single pkg)
   (define available-manifests '())
   (define manifest-provided? manifest-path)
 
