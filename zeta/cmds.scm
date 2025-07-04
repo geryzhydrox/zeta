@@ -9,7 +9,9 @@
   #:export (zeta-add
 	    zeta-del
 	    zeta-install
-	    zeta-remove))
+	    zeta-remove
+	    zeta-init
+	    zeta-list))
 
 (define-recursive (zeta-add manifest-paths)
   (single manifest-path)
@@ -96,7 +98,6 @@
   (single pkg)
   (define available-manifests '())
   (define manifest-provided? manifest-path)
-
   (unless manifest-path
     (info-with-msg "No manifest specified")
     (ftw %zeta-root
@@ -108,13 +109,14 @@
 	     (set! available-manifests (append available-manifests (list filename))))
 	   #t
 	   ))
-    (let ((answer (and (not (nil? available-manifests))
-		       (numbered-prompt (format #f "Choose manifest to remove `~a` from:" pkg) available-manifests))))
+    (let ((answer (cond ((nil? available-manifests) #f)
+			((equal? (length available-manifests) 1) (car available-manifests))
+			(#t (numbered-prompt (format #f "Choose manifest to remove `~a` from:" pkg) available-manifests)))))
       (set! manifest-path
 	    (if answer
 		(string-drop-right 
 		 (string-drop answer (1+ (string-length %zeta-root))) 4) 
-		(error-with-msg "Specified package not installed."))
+		(error-with-msg "Specified package is not installed."))
 	    )))
   (let ((filepath (relative->absolute manifest-path)))
     (unless (file-exists? filepath)
@@ -136,3 +138,32 @@
        #f))
   (finish
    (apply-root-manifest)))
+
+(define* (zeta-init #:optional (manual #t))
+  (when (or
+	 (not manual)   
+	 (and
+	  manual
+	  (file-exists? %zeta-root)
+	  (yn-prompt "Root manifest already exists. Overwrite?")))
+    (make-file-at-path %zeta-root "root.scm")
+    (set! %root-manifest (string-append %zeta-root "/" "root.scm"))
+    ))
+
+(define (zeta-list)
+  (define pkg+locations '())
+  (ftw %zeta-root
+	 (lambda (filename statinfo flag)
+	   (when (and
+		  (eq? flag 'regular)
+		  (not (string= filename %root-manifest)))
+	     (for-each (lambda (pkg+location)
+			 (when (not
+				(member pkg+location pkg+locations))
+			   (set! pkg+locations
+				 (append pkg+locations (list (list pkg+location filename))))))
+		       (read-pkgs filename)))
+	   #t))
+  (for-each (lambda (pkg+location)
+	      (format #t "~15a ~a\n" (car pkg+location)
+		      (cadr pkg+location))) pkg+locations))
