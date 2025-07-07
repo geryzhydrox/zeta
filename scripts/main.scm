@@ -1,6 +1,3 @@
-#!/usr/bin/env -S guile
-!#
-
 (add-to-load-path (string-append (dirname (current-filename)) "/.."))
 
 (use-modules (ice-9 match)
