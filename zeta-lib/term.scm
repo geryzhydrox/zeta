@@ -1,5 +1,4 @@
-(define-module (lib term)
-  ;; #:use-module (term ansi-color)
+(define-module (zeta-lib term)
   #:export (println
 	    usage
 	    error-with-msg
@@ -10,7 +9,7 @@
   (newline))
 
 (define (usage)
-  (println "Usage: zeta [install|remove|add|del] [manifest] [packages]")
+  (println "Usage: zeta [install|remove|add|del] [-m|--manifest manifest] [packages]")
   (exit 1))
 
 (define (colorize str color)

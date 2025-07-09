@@ -1,4 +1,4 @@
-(define-module (lib prompts)
+(define-module (zeta-lib prompts)
   #:use-module (ice-9 readline)
   #:use-module (ice-9 match)
   #:export (yn-prompt numbered-prompt))

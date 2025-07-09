@@ -1,7 +1,7 @@
-(define-module (lib cmds)
-  #:use-module (lib prompts)
-  #:use-module (lib system)
-  #:use-module (lib term)
+(define-module (zeta-lib cmds)
+  #:use-module (zeta-lib prompts)
+  #:use-module (zeta-lib system)
+  #:use-module (zeta-lib term)
   #:use-module (ice-9 ftw)
   #:use-module (ice-9 readline)
   #:export (zeta-add
@@ -13,6 +13,8 @@
 
 (define-recursive (zeta-add manifest-paths)
   (single manifest-path)
+  (when (not (file-exists? %root-manifest))
+    (zeta-init #f))
   (let* ((slash-index (string-rindex manifest-path #\/))
 	 (path (if slash-index
 		   (string-append %zeta-root "/"
@@ -63,6 +65,9 @@
 
 (define-recursive (zeta-install pkgs manifest-path)
   (single pkg)
+  (when (not (file-exists? %root-manifest))
+    (info-with-msg "Root manifest does not exist.")
+    (zeta-init #f))
   (define creating-new-manifest? #f)
   (unless manifest-path
     (info-with-msg "No manifest specified")
@@ -142,10 +147,13 @@
 	 (not manual)   
 	 (and
 	  manual
-	  (file-exists? %zeta-root)
-	  (yn-prompt "Root manifest already exists. Overwrite?")))
+	  (if (file-exists? %zeta-root) 
+	      (yn-prompt "Root manifest already exists. Overwrite?")
+	      #t)))
+    (info-with-msg "Creating root manifest...")
     (make-file-at-path %zeta-root "root.scm")
     (set! %root-manifest (string-append %zeta-root "/" "root.scm"))
+    (info-with-msg "Done.")
     ))
 
 (define (zeta-list)
@@ -162,6 +170,8 @@
 				 (append pkg+locations (list (list pkg+location filename))))))
 		       (read-pkgs filename)))
 	   #t))
+  (define max-len (apply max (map (lambda (lst) (string-length (car lst))) pkg+locations)))
+  (define format-str (string-append "~" (+ max-len 5) "a"))
   (for-each (lambda (pkg+location)
-	      (format #t "~15a ~a\n" (car pkg+location)
+	      (format #t (string-append format-str " ~a\n") (car pkg+location)
 		      (cadr pkg+location))) pkg+locations))

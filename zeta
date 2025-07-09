@@ -1,13 +1,13 @@
-#!/usr/bin/env guile
+#!/usr/bin/env -S guile -L .
 !#
 
-(add-to-load-path (string-append (dirname (current-filename))))
-
+;; (add-to-load-path (dirname (current-filename)))
+ 
 (use-modules (ice-9 match)
 	     (ice-9 getopt-long)
 	     (srfi srfi-1)
-	     (lib cmds)
-	     (lib term))
+	     (zeta-lib cmds)
+	     (zeta-lib term))
 
 (define option-spec
   '((manifest (single-char #\m) (value #t))))

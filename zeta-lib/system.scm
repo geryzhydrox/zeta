@@ -1,6 +1,6 @@
-(define-module (lib system)
+(define-module (zeta-lib system)
   #:use-module (ice-9 match)
-  #:use-module (lib term)
+  #:use-module (zeta-lib term)
   #:export (%zeta-root
 	    %root-manifest
 	    %rebuild?
