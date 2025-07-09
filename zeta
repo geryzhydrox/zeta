@@ -1,4 +1,4 @@
-#!/usr/bin/env -S guile -L .
+#!/usr/bin/env guile
 !#
 
 ;; (add-to-load-path (dirname (current-filename)))
