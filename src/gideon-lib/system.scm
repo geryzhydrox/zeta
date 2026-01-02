@@ -6,6 +6,7 @@
 	    %root-manifest
 	    %rebuild?
 	    %dry-run?
+	    %pedantic?
 	    apply-root-manifest
 	    relative->absolute
 	    get-gideon-root
@@ -36,6 +37,8 @@
 (define %rebuild? (make-parameter #f))
 
 (define %dry-run? (make-parameter #f))
+
+(define %pedantic? (make-parameter #f))
 
 (define* (apply-root-manifest #:optional (root-file (%root-manifest)))
    ;; TODO: Add facility to pass different args to `guix`, make `gideon` itself atomic
@@ -73,13 +76,13 @@ and a network connection is available."))))
     (lambda (input-port)
       (read input-port))))
 
-(define* (read-pkgs manifest #:optional (pedantic #t))
-  ;; "pedantic" arg: If #t, errors out on non-readable manifest, else interprets it as empty
+(define* (read-pkgs manifest)  
   (match (read-file manifest)
     (('specifications->manifest
       ('quote
        (pkgs ...))) pkgs)
-    (_ (if pedantic
+    (_ (if (%pedantic?)
+	   ;; "pedantic" param: If #t, errors out on non-readable manifest, else interprets it as empty
 	   (begin
 	     (error-with-msg
 	      (format #f "Cannot read package specifications from manifest ~a" manifest))
@@ -87,8 +90,7 @@ and a network connection is available."))))
 	      (format #f "Manifests must have the format (specifications->manifest '(spec1 spec2 ...))")))
 	   '()))))
 
-(define* (read-manifests root-file #:optional (pedantic #t))
-  ;; "pedantic" arg: If #t, errors out on non-readable root, else interprets it as empty
+(define* (read-manifests root-file)
   (match (read-file root-file)
     (('concatenate-manifests
       ('map ('lambda ('filepath)
@@ -97,7 +99,8 @@ and a network connection is available."))))
 		 ('lambda ('input-port)
 		   ('read 'input-port)))))
 	    ('quote (manifests ...)))) manifests)
-    (_ (if pedantic
+    (_ (if (%pedantic?)
+	   ;; "pedantic" param: If #t, errors out on non-readable root, else interprets it as empty
 	   (begin (error-with-msg "Cannot read manifests from root file.")
 		  ;; TODO: More helpful error. Maybe add command like `gideon fix` too fix broken root?
 		  )

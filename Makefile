@@ -1,5 +1,5 @@
 MAIN := gideon
-TEST := ./tests/tests.scm
+TEST := ../tests/tests.scm
 LIBS := ./gideon-lib/cmds.scm ./gideon-lib/prompts.scm ./gideon-lib/system.scm ./gideon-lib/term.scm
 BUILD := guild compile -L ./
 BUILD_NO_DEPS := guild compile

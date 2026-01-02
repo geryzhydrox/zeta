@@ -109,33 +109,25 @@
   (define manifest-provided? manifest-path)
   (unless manifest-path
     (info-with-msg "No manifest specified"))
-    ;; (ftw (%gideon-root)
-    ;; 	 (lambda (filename statinfo flag)
-    ;; 	   (when (and
-    ;; 		  (eq? flag 'regular)
-    ;; 		  (not (string= filename (%root-manifest)))
-    ;; 		  (member pkg (read-pkgs filename)))
-    ;; 	     (append! available-manifests (list filename)))
-    ;; 	   #t
-    ;; 	   ))
-    (walk-gideon-tree
-     (lambda (filename)
-       (when (and (not (string= filename (%root-manifest)))
-		  (member pkg (read-pkgs filename)))
-	 (append! available-manifests (list filename)))))
-    
-    (let ((answer (cond ((nil? available-manifests) #f)
-			((equal? (length available-manifests) 1) (car available-manifests))
-			(#t (numbered-prompt (format #f "Choose manifest to remove `~a` from:" pkg) available-manifests)))))
-      (set! manifest-path
-	    (if answer
-		(string-drop-right 
-		 (string-drop answer (1+ (string-length (%gideon-root)))) 4) 
-		(error-with-msg "Specified package is not installed."))
-	    ))
+  (walk-gideon-tree
+   (lambda (filename)
+     (when (and (not (string= filename (%root-manifest)))
+		(member pkg (read-pkgs filename)))
+       (set! available-manifests (append available-manifests (list filename))))))
+  
+  
+  (let ((answer (cond ((nil? available-manifests) #f)
+		      ((equal? (length available-manifests) 1) (car available-manifests))
+		      (#t (numbered-prompt (format #f "Choose manifest to remove `~a` from:" pkg) available-manifests)))))
+    (set! manifest-path
+	  (if answer
+	      (string-drop-right 
+	       (string-drop answer (1+ (string-length (%gideon-root)))) 4) 
+	      (error-with-msg "Specified package is not installed."))
+	  ))
   (let ((filepath (relative->absolute manifest-path (%gideon-root))))
     (unless (file-exists? filepath)
-	(error-with-msg (format #f "Specified manifest ~a does not exist" filepath)))
+      (error-with-msg (format #f "Specified manifest ~a does not exist" filepath)))
     (info-with-msg (format #f "Deleting package ~a from manifest ~a" pkg filepath))
     (let* ((manifest-pkgs (read-pkgs filepath))
 	   (new-pkgs (if (member pkg manifest-pkgs)
