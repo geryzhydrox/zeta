@@ -28,10 +28,10 @@ installed at all times.
 procedural style when convenient.  It uses =guix='s =manifest= feature
 (specifically, =specifications->manifest= and =concatenate-manifests=) to build a
 "root" manifest (=root.scm= by default) from a directory tree (located
-at =$GIDEON_ROOT=, =$HOME/.gideon= by default) and install it via =guix
-install -m=. This has the advantage that you can manually use both the
-individual manifests as well as the root manifest as inputs for =guix
-shell -m= or =guix install -m=.
+at =$GIDEON_ROOT=, =$HOME/.gideon= by default) and install it via =guix install -m=.
+This has the advantage that you can manually use both the
+individual manifests as well as the root manifest as inputs for =guix shell -m=
+or =guix install -m=.
 
 * Subcommands:
 - =gideon init=
