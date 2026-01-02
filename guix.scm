@@ -15,9 +15,9 @@
    (method git-fetch)
    (uri (git-reference
 	 (url "https://github.com/geryzhydrox/gideon")
-	 (commit "3b213e055c51a33a883f533a039948d90fec87f4")))
+	 (commit "dac3a79f5f6760d6e6d323f0f53f4742b22a14d8")))
    (sha256
-    (base32 "19mn3clcwn9m72my6y7v03z81cmp9k2sv7f4d13hw6q4zkz570bm"))))
+    (base32 "133wsy4mbpkibnp9bar0whpnkzp2i2rfg4m57116l6k6a7zplnbq"))))
  (build-system guile-build-system)
  (arguments
   '(#:source-directory "src"
