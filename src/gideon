@@ -23,10 +23,9 @@
 
 (set! cmdline 
       (remove (lambda (str)
-		(or (string-contains str "--manifest")
-		    (string= str "-m")
-		    (string-contains str "--dry-run")
-		    (string= str "-d"))) cmdline))
+		(string= (string-take str 1) "-")) cmdline))
+
+;; TODO: Make command line processing more DRY.
 
 (set! cmdline (delete provided-manifest cmdline))
 
@@ -36,7 +35,8 @@
     ((_ "add" manifest-path ...) (gideon-add manifest-path))
     ((_ "del" manifest-path ...) (gideon-del manifest-path))
     ((_ "install" pkgs ...)	 (gideon-install pkgs provided-manifest))
-    ((_  "remove" pkgs ...)	 (gideon-remove pkgs provided-manifest))
+    ((_ "remove" pkgs ...)	 (gideon-remove pkgs provided-manifest))
+    ((_ "replace" kvs ...)       (gideon-replace kvs))
     ((_ "apply")		 (gideon-apply))
     ((_ "list")			 (gideon-list))
     ((_ "rescan")                (gideon-rescan))

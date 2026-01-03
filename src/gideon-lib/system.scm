@@ -9,8 +9,6 @@
 	    %pedantic?
 	    apply-root-manifest
 	    relative->absolute
-	    get-gideon-root
-	    set-gideon-root
 	    mkdir-p
 	    touch
 	    make-file-at-path

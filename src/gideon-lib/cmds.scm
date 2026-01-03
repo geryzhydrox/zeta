@@ -8,6 +8,7 @@
 	    gideon-del
 	    gideon-install
 	    gideon-remove
+	    gideon-replace
 	    gideon-list
 	    gideon-rescan
 	    gideon-purge
@@ -144,6 +145,23 @@
        #f))
   (finish
    (gideon-apply)))
+
+(define-recursive (gideon-replace kvs)
+  (bind keyval)
+  (unless (and (string-contains keyval "=")
+	       (eq? (string-index keyval #\=) (string-rindex keyval #\=)))
+    (error-with-msg "Arguments to gideon-replace must be of the form PKG=PKG* !"))
+  (let* ((sep-index (string-index keyval #\=))
+	 (old (string-take keyval sep-index))
+	 (new (string-drop keyval (1+ sep-index))))
+    
+    (walk-gideon-tree
+     (lambda (filename)
+       (system (format #f "sed -i 's/~a/~a/g' ~a" ;; Unix philosophy at work!
+			old new filename))
+       )))
+  (recurse (cdr kvs))
+  (finish (gideon-apply)))
 
 (define* (gideon-init #:optional (manual #t))
   (define filepath (format #f "~a/root.scm" (%gideon-root)))

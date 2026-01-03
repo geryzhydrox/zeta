@@ -1,6 +1,6 @@
-MAIN := gideon
-TEST := ../tests/tests.scm
-LIBS := ./gideon-lib/cmds.scm ./gideon-lib/prompts.scm ./gideon-lib/system.scm ./gideon-lib/term.scm
+MAIN := ./src/gideon
+TEST := ./tests/tests.scm
+LIBS := ./src/gideon-lib/cmds.scm ./src/gideon-lib/prompts.scm ./src/gideon-lib/system.scm ./src/gideon-lib/term.scm
 BUILD := guild compile -L ./
 BUILD_NO_DEPS := guild compile
 
@@ -12,15 +12,15 @@ all: $(MAIN) cmds system term prompts
 test: cmds system term prompts
 	$(BUILD) $(TEST)
 	guile -L . $(TEST)
-cmds: system prompts term ./gideon-lib/cmds.scm
-	$(BUILD) ./gideon-lib/cmds.scm
+cmds: system prompts term ./src/gideon-lib/cmds.scm
+	$(BUILD) ./src/gideon-lib/cmds.scm
 
-system: term ./gideon-lib/system.scm
-	$(BUILD) ./gideon-lib/system.scm
+system: term ./src/gideon-lib/system.scm
+	$(BUILD) ./src/gideon-lib/system.scm
 
-prompts: ./gideon-lib/prompts.scm
-	$(BUILD_NO_DEPS) ./gideon-lib/prompts.scm
+prompts: ./src/gideon-lib/prompts.scm
+	$(BUILD_NO_DEPS) ./src/gideon-lib/prompts.scm
 
-term: ./gideon-lib/term.scm
-	$(BUILD_NO_DEPS) ./gideon-lib/term.scm
+term: ./src/gideon-lib/term.scm
+	$(BUILD_NO_DEPS) ./src/gideon-lib/term.scm
 
